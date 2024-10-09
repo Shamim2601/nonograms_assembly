@@ -30,8 +30,7 @@ FALSE = 0
 
 MAX_WIDTH = 12
 MAX_HEIGHT = 10
-MIN_WIDTH = 3
-MIN_HEIGHT = 3
+MIN_VALUE = 3
 
 UNMARKED = 1
 MARKED = 2
@@ -214,11 +213,13 @@ main__prologue:
     li      $s0, 0
     li      $s1, 0
 
-    la      $a2, str__main__height
+    la      $a1, str__main__height
+    la      $a2, MAX_HEIGHT
     la      $a3, height
     jal     prompt_for_dimension
 
-    la      $a2, str__main__width
+    la      $a1, str__main__width
+    la	    $a2, MAX_WIDTH
     la      $a3, width
     jal     prompt_for_dimension
 
@@ -274,7 +275,6 @@ prompt_for_dimension__prologue:
     sw      $s0, 24($sp)
     sw      $s1, 20($sp)
     sw      $s2, 16($sp)
-    move    $s0, $a1               # Store min value
     move    $s1, $a2               # Store max value
     move    $s2, $a3               # Store pointer to the variable (height or width)
 
@@ -283,7 +283,7 @@ prompt_for_dimension__loop:
     la      $a0, str__prompt_for_dimension__enter_the
     syscall
 
-    move    $a0, $a2
+    move    $a0, $a1
     li      $v0, 4
     syscall
 
@@ -295,7 +295,7 @@ prompt_for_dimension__loop:
     syscall
     move    $t0, $v0               # Store input in $t0
 
-    blt     $t0, $s0, prompt_for_dimension__too_small
+    blt     $t0, MIN_VALUE, prompt_for_dimension__too_small
     bgt     $t0, $s1, prompt_for_dimension__too_big
 
     sw      $t0, 0($s2)            # Store valid input at the address of the variable
@@ -306,7 +306,7 @@ prompt_for_dimension__too_small:
     li      $v0, 4
     syscall
 
-    move    $a0, $a2
+    move    $a0, $a1
     li      $v0, 4
     syscall
 
@@ -314,7 +314,7 @@ prompt_for_dimension__too_small:
     li      $v0, 4
     syscall
 
-    move    $a0, $s0               # Print minimum value
+    move    $a0, MIN_VALUE
     li      $v0, 1
     syscall
 
@@ -328,7 +328,7 @@ prompt_for_dimension__too_big:
     li      $v0, 4
     syscall
 
-    move    $a0, $a2
+    move    $a0, $a1
     li      $v0, 4
     syscall
 
@@ -336,7 +336,7 @@ prompt_for_dimension__too_big:
     li      $v0, 4
     syscall
 
-    move    $a0, $s1               # Print maximum value
+    move    $a0, $s1
     li      $v0, 1
     syscall
 
