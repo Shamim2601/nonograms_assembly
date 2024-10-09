@@ -256,7 +256,7 @@ main__epilogue:
 prompt_for_dimension:
 	# Subset:   1
 	#
-	# Frame:    [32 bytes for storing $ra, saved registers, and local variables]
+	# Frame:    32 bytes for storing $ra, saved registers, and local variables
 	# Uses:     $a0, $a1, $a2, $a3, $v0, $t0, $t1
 	# Clobbers: $v0, $t0, $t1
 	#
@@ -275,7 +275,6 @@ prompt_for_dimension__prologue:
     sw      $s0, 24($sp)        # Save $s0 (used for min)
     sw      $s1, 20($sp)        # Save $s1 (used for max)
     sw      $s2, 16($sp)        # Save $s2 (used for pointer)
-    sw      $s3, 12($sp)        # Save $s3 (used for input)
     move    $s0, $a1            # Save min into $s0
     move    $s1, $a2            # Save max into $s1
     move    $s2, $a3            # Save pointer into $s2
@@ -283,15 +282,22 @@ prompt_for_dimension__prologue:
 prompt_for_dimension__body:
 prompt_for_dimension__loop:
     # Print the prompt message: "Enter the name: "
-    la      $a0, enter_str      # Load address of "Enter the" string
-    move    $a1, $a0            # Set $a1 to point to name (in $a0)
-    li      $v0, 4              # Syscall code for print_string
-    syscall                     # Print string
+    la      $a0, str__prompt_for_dimension__enter_the # Load "Enter the " string
+    li      $v0, 4                 # Syscall code for print_string
+    syscall                        # Print "Enter the "
+
+    move    $a0, $a0               # Name is already in $a0 from function call
+    li      $v0, 4                 # Syscall code for print_string
+    syscall                        # Print name
+
+    la      $a0, str__prompt_for_dimension__colon   # Load ": " string
+    li      $v0, 4                 # Syscall code for print_string
+    syscall                        # Print ": "
 
     # Read integer input
-    li      $v0, 5              # Syscall code for read_int
-    syscall                     # Read input
-    move    $t0, $v0            # Store the input in $t0
+    li      $v0, 5                 # Syscall code for read_int
+    syscall                        # Read input
+    move    $t0, $v0               # Store the input in $t0
 
     # Check if input is too small
     blt     $t0, $s0, prompt_for_dimension__too_small
@@ -305,20 +311,48 @@ prompt_for_dimension__loop:
 
 prompt_for_dimension__too_small:
     # Print error message: "error: too small, the minimum name is min\n"
-    la      $a0, small_error_str   # Load address of "error: too small" string
-    move    $a1, $a0               # Move name into $a1
-    move    $a2, $s0               # Move min value into $a2
+    la      $a0, str__prompt_for_dimension__too_small  # Load error message
     li      $v0, 4                 # Syscall code for print_string
-    syscall                        # Print the string
+    syscall                        # Print the error message
+
+    move    $a0, $a0               # Print the name again
+    li      $v0, 4                 # Syscall code for print_string
+    syscall                        # Print name
+
+    la      $a0, str__prompt_for_dimension__is   # Load " is " string
+    li      $v0, 4                 # Syscall code for print_string
+    syscall                        # Print " is "
+
+    move    $a0, $s0               # Load min value
+    li      $v0, 1                 # Syscall code for print_int
+    syscall                        # Print the minimum value
+
+    li      $a0, '\n'              # Load newline character
+    li      $v0, 11                # Syscall code for print_char
+    syscall                        # Print newline
     j       prompt_for_dimension__loop
 
 prompt_for_dimension__too_big:
     # Print error message: "error: too big, the maximum name is max\n"
-    la      $a0, big_error_str     # Load address of "error: too big" string
-    move    $a1, $a0               # Move name into $a1
-    move    $a2, $s1               # Move max value into $a2
+    la      $a0, str__prompt_for_dimension__too_big  # Load error message
     li      $v0, 4                 # Syscall code for print_string
-    syscall                        # Print the string
+    syscall                        # Print the error message
+
+    move    $a0, $a0               # Print the name again
+    li      $v0, 4                 # Syscall code for print_string
+    syscall                        # Print name
+
+    la      $a0, str__prompt_for_dimension__is   # Load " is " string
+    li      $v0, 4                 # Syscall code for print_string
+    syscall                        # Print " is "
+
+    move    $a0, $s1               # Load max value
+    li      $v0, 1                 # Syscall code for print_int
+    syscall                        # Print the maximum value
+
+    li      $a0, '\n'              # Load newline character
+    li      $v0, 11                # Syscall code for print_char
+    syscall                        # Print newline
     j       prompt_for_dimension__loop
 
 prompt_for_dimension__exit:
@@ -327,7 +361,6 @@ prompt_for_dimension__epilogue:
     lw      $s0, 24($sp)        # Restore $s0
     lw      $s1, 20($sp)        # Restore $s1
     lw      $s2, 16($sp)        # Restore $s2
-    lw      $s3, 12($sp)        # Restore $s3
     addi    $sp, $sp, 32        # Restore stack pointer
     jr      $ra                 # Return to caller
 
