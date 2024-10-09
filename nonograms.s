@@ -256,25 +256,80 @@ main__epilogue:
 prompt_for_dimension:
 	# Subset:   1
 	#
-	# Frame:    [...]   <-- FILL THESE OUT!
-	# Uses:     [...]
-	# Clobbers: [...]
+	# Frame:    [32 bytes for storing $ra, saved registers, and local variables]
+	# Uses:     $a0, $a1, $a2, $a3, $v0, $t0, $t1
+	# Clobbers: $v0, $t0, $t1
 	#
-	# Locals:           <-- FILL THIS OUT!
-	#   - ...
+	# Locals:   
+	#   - input (stored in $t0)
 	#
-	# Structure:        <-- FILL THIS OUT!
+	# Structure:        
 	#   prompt_for_dimension
 	#   -> [prologue]
 	#     -> body
 	#   -> [epilogue]
 
 prompt_for_dimension__prologue:
+    addi    $sp, $sp, -32       # Allocate stack frame
+    sw      $ra, 28($sp)        # Save return address
+    sw      $s0, 24($sp)        # Save $s0 (used for min)
+    sw      $s1, 20($sp)        # Save $s1 (used for max)
+    sw      $s2, 16($sp)        # Save $s2 (used for pointer)
+    sw      $s3, 12($sp)        # Save $s3 (used for input)
+    move    $s0, $a1            # Save min into $s0
+    move    $s1, $a2            # Save max into $s1
+    move    $s2, $a3            # Save pointer into $s2
 
 prompt_for_dimension__body:
+prompt_for_dimension__loop:
+    # Print the prompt message: "Enter the name: "
+    la      $a0, enter_str      # Load address of "Enter the" string
+    move    $a1, $a0            # Set $a1 to point to name (in $a0)
+    li      $v0, 4              # Syscall code for print_string
+    syscall                     # Print string
 
+    # Read integer input
+    li      $v0, 5              # Syscall code for read_int
+    syscall                     # Read input
+    move    $t0, $v0            # Store the input in $t0
+
+    # Check if input is too small
+    blt     $t0, $s0, prompt_for_dimension__too_small
+
+    # Check if input is too big
+    bgt     $t0, $s1, prompt_for_dimension__too_big
+
+    # Input is valid, store it in the address pointed to by $s2
+    sw      $t0, 0($s2)
+    j       prompt_for_dimension__exit
+
+prompt_for_dimension__too_small:
+    # Print error message: "error: too small, the minimum name is min\n"
+    la      $a0, small_error_str   # Load address of "error: too small" string
+    move    $a1, $a0               # Move name into $a1
+    move    $a2, $s0               # Move min value into $a2
+    li      $v0, 4                 # Syscall code for print_string
+    syscall                        # Print the string
+    j       prompt_for_dimension__loop
+
+prompt_for_dimension__too_big:
+    # Print error message: "error: too big, the maximum name is max\n"
+    la      $a0, big_error_str     # Load address of "error: too big" string
+    move    $a1, $a0               # Move name into $a1
+    move    $a2, $s1               # Move max value into $a2
+    li      $v0, 4                 # Syscall code for print_string
+    syscall                        # Print the string
+    j       prompt_for_dimension__loop
+
+prompt_for_dimension__exit:
 prompt_for_dimension__epilogue:
-	jr      $ra
+    lw      $ra, 28($sp)        # Restore $ra
+    lw      $s0, 24($sp)        # Restore $s0
+    lw      $s1, 20($sp)        # Restore $s1
+    lw      $s2, 16($sp)        # Restore $s2
+    lw      $s3, 12($sp)        # Restore $s3
+    addi    $sp, $sp, 32        # Restore stack pointer
+    jr      $ra                 # Return to caller
 
 
 ################################################################################
