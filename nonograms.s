@@ -212,13 +212,13 @@ main__prologue:
 	li      $s0, 0
 	li      $s1, 0
 	
-	la      $a0, height_str
+	la      $a0, str__main__height
 	li      $a1, 3
 	li      $a2, MAX_HEIGHT
 	la      $a3, height
 	jal     prompt_for_dimension
 
-	la      $a0, width_str
+	la      $a0, str__main__width
 	li      $a1, 3
 	li      $a2, MAX_WIDTH
 	la      $a3, width
@@ -233,7 +233,7 @@ main__prologue:
 	
 	jal     game_loop
 
-	la      $a0, congrats_str
+	la      $a0, str__main__congrats
 	li      $v0, 4
 	syscall
 
@@ -356,7 +356,6 @@ prompt_for_dimension__epilogue:
     lw      $s2, 16($sp)
     addi    $sp, $sp, 32
     jr      $ra
-
 
 
 ################################################################################
