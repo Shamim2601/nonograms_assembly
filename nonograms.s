@@ -178,76 +178,76 @@ str__get_command__bad_command:
 # .TEXT <main>
                 .text
 main:
-	# Subset:   1
-	#
-	# Frame:    32
-	# Uses:     $a0, $a1, $a2, $v0, $ra
-	# Clobbers: $t0, $t1, $t2, $t3
-	#
-	# Locals:
-	#   - height
-	#   - width
-	#
-	# Structure:
-	#   main
-	#   -> [prologue]
-	#     -> prompt_for_dimension (height)
-	#     -> prompt_for_dimension (width)
-	#     -> initialise_game
-	#     -> read_solution
-	#     -> game_loop
-	#   -> [epilogue]
+    # Subset:   1
+    #
+    # Frame:    32
+    # Uses:     $a0, $a1, $a2, $v0, $ra
+    # Clobbers: $t0, $t1, $t2, $t3
+    #
+    # Locals:
+    #   - height
+    #   - width
+    #
+    # Structure:
+    #   main
+    #   -> [prologue]
+    #     -> prompt_for_dimension (height)
+    #     -> prompt_for_dimension (width)
+    #     -> initialise_game
+    #     -> read_solution
+    #     -> game_loop
+    #   -> [epilogue]
 
 main__prologue:
-	addi    $sp, $sp, -32
-	sw      $ra, 28($sp)
-	sw      $s0, 24($sp)
-	sw      $s1, 20($sp)
-	sw      $s2, 16($sp)
-	sw      $s3, 12($sp)
-	sw      $s4, 8($sp)
-	sw      $s5, 4($sp)
-	sw      $s6, 0($sp)
-	
-	li      $s0, 0
-	li      $s1, 0
-	
-	la      $a0, str__main__height
-	li      $a1, 3
-	li      $a2, MAX_HEIGHT
-	la      $a3, height
-	jal     prompt_for_dimension
+    addi    $sp, $sp, -32
+    sw      $ra, 28($sp)
+    sw      $s0, 24($sp)
+    sw      $s1, 20($sp)
+    sw      $s2, 16($sp)
+    sw      $s3, 12($sp)
+    sw      $s4, 8($sp)
+    sw      $s5, 4($sp)
+    sw      $s6, 0($sp)
 
-	la      $a0, str__main__width
-	li      $a1, 3
-	li      $a2, MAX_WIDTH
-	la      $a3, width
-	jal     prompt_for_dimension
+    li      $s0, 0
+    li      $s1, 0
 
-	jal     initialise_game
-	jal     read_solution
-	
-	li      $v0, 11
-	li      $a0, '\n'
-	syscall
-	
-	jal     game_loop
+    la      $a0, str__main__height
+    li      $a1, 3
+    li      $a2, 10                # Use MAX_HEIGHT here
+    la      $a3, height
+    jal     prompt_for_dimension
 
-	la      $a0, str__main__congrats
-	li      $v0, 4
-	syscall
+    la      $a0, str__main__width
+    li      $a1, 3
+    li      $a2, 12                # Use MAX_WIDTH here
+    la      $a3, width
+    jal     prompt_for_dimension
+
+    jal     initialise_game
+    jal     read_solution
+
+    li      $v0, 11
+    li      $a0, '\n'
+    syscall
+
+    jal     game_loop
+
+    la      $a0, str__main__congrats
+    li      $v0, 4
+    syscall
 
 main__epilogue:
-	lw      $ra, 28($sp)
-	lw      $s0, 24($sp)
-	lw      $s1, 20($sp)
-	lw      $s2, 16($sp)
-	lw      $s3, 12($sp)
-	lw      $s4, 8($sp)
-	lw      $s5, 4($sp)
-	lw      $s6, 0($sp)
-	addi    $sp, $sp, 32
-	jr      $ra
+    lw      $ra, 28($sp)
+    lw      $s0, 24($sp)
+    lw      $s1, 20($sp)
+    lw      $s2, 16($sp)
+    lw      $s3, 12($sp)
+    lw      $s4, 8($sp)
+    lw      $s5, 4($sp)
+    lw      $s6, 0($sp)
+    addi    $sp, $sp, 32
+    jr      $ra
 
 
 
@@ -255,20 +255,20 @@ main__epilogue:
 # .TEXT <prompt_for_dimension>
                 .text
 prompt_for_dimension:
-	# Subset:   1
-	#
-	# Frame:    32 bytes for storing $ra, saved registers, and local variables
-	# Uses:     $a0, $a1, $a2, $a3, $v0, $t0, $t1
-	# Clobbers: $v0, $t0, $t1
-	#
-	# Locals:   
-	#   - input (stored in $t0)
-	#
-	# Structure:        
-	#   prompt_for_dimension
-	#   -> [prologue]
-	#     -> body
-	#   -> [epilogue]
+    # Subset:   1
+    #
+    # Frame:    32 bytes for storing $ra, saved registers, and local variables
+    # Uses:     $a0, $a1, $a2, $a3, $v0, $t0, $t1
+    # Clobbers: $v0, $t0, $t1
+    #
+    # Locals:   
+    #   - input (stored in $t0)
+    #
+    # Structure:        
+    #   prompt_for_dimension
+    #   -> [prologue]
+    #     -> body
+    #   -> [epilogue]
 
 prompt_for_dimension__prologue:
     addi    $sp, $sp, -32
@@ -276,9 +276,9 @@ prompt_for_dimension__prologue:
     sw      $s0, 24($sp)
     sw      $s1, 20($sp)
     sw      $s2, 16($sp)
-    move    $s0, $a1
-    move    $s1, $a2
-    move    $s2, $a3
+    move    $s0, $a1               # Store min value
+    move    $s1, $a2               # Store max value
+    move    $s2, $a3               # Store pointer to the variable (height or width)
 
 prompt_for_dimension__body:
 prompt_for_dimension__loop:
@@ -286,7 +286,7 @@ prompt_for_dimension__loop:
     li      $v0, 4
     syscall
 
-    move    $a0, $s2              # Load the pointer to the dimension name (height or width)
+    move    $a0, $a3               # Print the name (height/width)
     li      $v0, 4
     syscall
 
@@ -301,7 +301,7 @@ prompt_for_dimension__loop:
     blt     $t0, $s0, prompt_for_dimension__too_small
     bgt     $t0, $s1, prompt_for_dimension__too_big
 
-    sw      $t0, 0($s2)            # Store valid input
+    sw      $t0, 0($s2)            # Store valid input at the address of the variable
     j       prompt_for_dimension__exit
 
 prompt_for_dimension__too_small:
@@ -309,7 +309,7 @@ prompt_for_dimension__too_small:
     li      $v0, 4
     syscall
 
-    move    $a0, $s2              # Load the pointer to the dimension name again
+    move    $a0, $a3               # Print the name again
     li      $v0, 4
     syscall
 
@@ -317,11 +317,11 @@ prompt_for_dimension__too_small:
     li      $v0, 4
     syscall
 
-    move    $a0, $s0              # Load min value
+    move    $a0, $s0               # Print minimum value
     li      $v0, 1
     syscall
 
-    li      $a0, '\n'             # Newline
+    li      $a0, '\n'              # Print newline
     li      $v0, 11
     syscall
     j       prompt_for_dimension__loop
@@ -331,7 +331,7 @@ prompt_for_dimension__too_big:
     li      $v0, 4
     syscall
 
-    move    $a0, $s2              # Load the pointer to the dimension name again
+    move    $a0, $a3               # Print the name again
     li      $v0, 4
     syscall
 
@@ -339,11 +339,11 @@ prompt_for_dimension__too_big:
     li      $v0, 4
     syscall
 
-    move    $a0, $s1              # Load max value
+    move    $a0, $s1               # Print maximum value
     li      $v0, 1
     syscall
 
-    li      $a0, '\n'             # Newline
+    li      $a0, '\n'              # Print newline
     li      $v0, 11
     syscall
     j       prompt_for_dimension__loop
