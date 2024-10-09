@@ -282,26 +282,26 @@ prompt_for_dimension__prologue:
 
 prompt_for_dimension__body:
 prompt_for_dimension__loop:
-    la      $a0, str__prompt_for_dimension__enter_the
+    la      $a0, str__prompt_for_dimension__enter_the  # Load "Enter the"
     li      $v0, 4
     syscall
 
-    move    $a0, $a3
+    move    $a0, $s2              # Load the pointer to the dimension name (height or width)
     li      $v0, 4
     syscall
 
-    la      $a0, str__prompt_for_dimension__colon
+    la      $a0, str__prompt_for_dimension__colon  # Load ":"
     li      $v0, 4
     syscall
 
-    li      $v0, 5
+    li      $v0, 5                 # Read integer input
     syscall
-    move    $t0, $v0
+    move    $t0, $v0               # Store input in $t0
 
     blt     $t0, $s0, prompt_for_dimension__too_small
     bgt     $t0, $s1, prompt_for_dimension__too_big
 
-    sw      $t0, 0($s2)
+    sw      $t0, 0($s2)            # Store valid input
     j       prompt_for_dimension__exit
 
 prompt_for_dimension__too_small:
@@ -309,7 +309,7 @@ prompt_for_dimension__too_small:
     li      $v0, 4
     syscall
 
-    move    $a0, $a0
+    move    $a0, $s2              # Load the pointer to the dimension name again
     li      $v0, 4
     syscall
 
@@ -317,11 +317,11 @@ prompt_for_dimension__too_small:
     li      $v0, 4
     syscall
 
-    move    $a0, $s0
+    move    $a0, $s0              # Load min value
     li      $v0, 1
     syscall
 
-    li      $a0, '\n'
+    li      $a0, '\n'             # Newline
     li      $v0, 11
     syscall
     j       prompt_for_dimension__loop
@@ -331,7 +331,7 @@ prompt_for_dimension__too_big:
     li      $v0, 4
     syscall
 
-    move    $a0, $a0
+    move    $a0, $s2              # Load the pointer to the dimension name again
     li      $v0, 4
     syscall
 
@@ -339,11 +339,11 @@ prompt_for_dimension__too_big:
     li      $v0, 4
     syscall
 
-    move    $a0, $s1
+    move    $a0, $s1              # Load max value
     li      $v0, 1
     syscall
 
-    li      $a0, '\n'
+    li      $a0, '\n'             # Newline
     li      $v0, 11
     syscall
     j       prompt_for_dimension__loop
