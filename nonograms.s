@@ -30,6 +30,8 @@ FALSE = 0
 
 MAX_WIDTH = 12
 MAX_HEIGHT = 10
+MIN_WIDTH = 3
+MIN_HEIGHT = 3
 
 UNMARKED = 1
 MARKED = 2
@@ -212,15 +214,11 @@ main__prologue:
     li      $s0, 0
     li      $s1, 0
 
-    la      $a0, str__main__height
-    li      $a1, 3
-    li      $a2, 10                # Use MAX_HEIGHT here
+    la      $a2, str__main__height
     la      $a3, height
     jal     prompt_for_dimension
 
-    la      $a0, str__main__width
-    li      $a1, 3
-    li      $a2, 12                # Use MAX_WIDTH here
+    la      $a2, str__main__width
     la      $a3, width
     jal     prompt_for_dimension
 
@@ -253,7 +251,7 @@ main__epilogue:
 
 ################################################################################
 # .TEXT <prompt_for_dimension>
-                .text
+	.text
 prompt_for_dimension:
     # Subset:   1
     #
@@ -282,15 +280,14 @@ prompt_for_dimension__prologue:
 
 prompt_for_dimension__body:
 prompt_for_dimension__loop:
-    la      $a0, str__prompt_for_dimension__enter_the  # Load "Enter the"
+    la      $a0, str__prompt_for_dimension__enter_the
+    syscall
+
+    move    $a0, $a2
     li      $v0, 4
     syscall
 
-    move    $a0, $a3               # Print the name (height/width)
-    li      $v0, 4
-    syscall
-
-    la      $a0, str__prompt_for_dimension__colon  # Load ":"
+    la      $a0, str__prompt_for_dimension__colon 
     li      $v0, 4
     syscall
 
@@ -309,7 +306,7 @@ prompt_for_dimension__too_small:
     li      $v0, 4
     syscall
 
-    move    $a0, $a3               # Print the name again
+    move    $a0, $a2
     li      $v0, 4
     syscall
 
@@ -331,7 +328,7 @@ prompt_for_dimension__too_big:
     li      $v0, 4
     syscall
 
-    move    $a0, $a3               # Print the name again
+    move    $a0, $a2
     li      $v0, 4
     syscall
 
