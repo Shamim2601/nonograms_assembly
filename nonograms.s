@@ -284,6 +284,7 @@ prompt_for_dimension__prologue:
 prompt_for_dimension__body:
 prompt_for_dimension__loop:
     la      $a0, str__prompt_for_dimension__enter_the
+    li      $v0, 4
     syscall
 
     move    $a0, $a1
@@ -520,25 +521,76 @@ decode_coordinate__epilogue:
 read_solution:
 	# Subset:   2
 	#
-	# Frame:    [...]   <-- FILL THESE OUT!
-	# Uses:     [...]
-	# Clobbers: [...]
+	# Frame:    32 bytes
+	# Uses:     $a0, $a1, $a2, $v0, $v1
+	# Clobbers: $t0, $t1, $t2, $t3, $t4, $s0, $s1
 	#
-	# Locals:           <-- FILL THIS OUT!
-	#   - ...
+	# Locals:
+	#   - $s0 (stores row)
+	#   - $s1 (stores col)
+	#   - $t0 (stores total)
 	#
-	# Structure:        <-- FILL THIS OUT!
+	# Structure:
 	#   read_solution
 	#   -> [prologue]
 	#     -> body
 	#   -> [epilogue]
 
 read_solution__prologue:
+    addi    $sp, $sp, -32
+    sw      $ra, 28($sp)
+    sw      $s0, 24($sp)
+    sw      $s1, 20($sp)
+    li      $t0, 0
 
 read_solution__body:
+    la      $a0, prompt_solution   # Load the "Enter solution: " prompt
+    li      $v0, 4                 # Print string syscall
+    syscall
+
+read_solution__loop:
+    li      $v0, 5                 # Read integer syscall
+    syscall
+    move    $s0, $v0               # row = input
+
+    li      $v0, 5                 # Read integer syscall
+    syscall
+    move    $s1, $v0               # col = input
+
+    bltz    $s0, read_solution__break  # if row < 0, break
+    bltz    $s1, read_solution__break  # if col < 0, break
+
+    li      $t1, height
+    rem     $t2, $s0, $t1          # row % height
+    li      $t3, width
+    rem     $t4, $s1, $t3          # col % width
+    la      $a0, solution
+    mul     $t5, $t2, $t3          # row * width
+    add     $t5, $t5, $t4          # row * width + col
+    sb      $t6, MARKED($a0)       # solution[row % height][col % width] = MARKED
+    addi    $t0, $t0, 1            # total++
+
+    j       read_solution__loop
+
+read_solution__break:
+    la      $a0, solution
+    la      $a1, solution_clues
+    jal     compute_all_clues
+
+    la      $a0, solution_clues
+    la      $displayed_clues, $a0
+
+    la      $a0, prompt_loaded
+    move    $a1, $t0
+    li      $v0, 1
+    syscall
 
 read_solution__epilogue:
-	jr      $ra
+    lw      $ra, 28($sp)
+    lw      $s0, 24($sp)
+    lw      $s1, 20($sp)
+    addi    $sp, $sp, 32
+    jr      $ra
 
 
 ################################################################################
@@ -547,25 +599,52 @@ read_solution__epilogue:
 lookup_clue:
 	# Subset:   2
 	#
-	# Frame:    [...]   <-- FILL THESE OUT!
-	# Uses:     [...]
-	# Clobbers: [...]
+	# Frame:    32 bytes
+	# Uses:     $a0, $a1, $a2, $v0, $v1
+	# Clobbers: $t0, $t1, $t2, $t3, $s0
 	#
-	# Locals:           <-- FILL THIS OUT!
-	#   - ...
+	# Locals:
+	#   - $s0 (stores index)
 	#
-	# Structure:        <-- FILL THIS OUT!
+	# Structure:
 	#   lookup_clue
 	#   -> [prologue]
 	#     -> body
 	#   -> [epilogue]
 
 lookup_clue__prologue:
+    addi    $sp, $sp, -32
+    sw      $ra, 28($sp)
+    sw      $s0, 24($sp)
 
 lookup_clue__body:
+    add     $t0, $a2, 1            
+    div     $t1, $a1, $t0          
+    mflo    $s0                    
+
+    beq     $a2, $zero, lookup_clue__check
+    rem     $t2, $a1, 2            
+    bne     $t2, $zero, lookup_clue__space
+
+lookup_clue__check:
+    sll     $t3, $s0, 2            
+    add     $t3, $a0, $t3          
+    lw      $t4, 0($t3)            
+    beq     $t4, $zero, lookup_clue__space
+
+lookup_clue__return_value:
+    addi    $v0, $t4, 48           
+    j       lookup_clue__epilogue
+
+lookup_clue__space:
+    li      $v0, 32               
 
 lookup_clue__epilogue:
-	jr      $ra
+    lw      $ra, 28($sp)
+    lw      $s0, 24($sp)
+    addi    $sp, $sp, 32
+    jr      $ra
+
 
 
 ################################################################################
@@ -574,25 +653,64 @@ lookup_clue__epilogue:
 compute_all_clues:
 	# Subset:   2
 	#
-	# Frame:    [...]   <-- FILL THESE OUT!
-	# Uses:     [...]
-	# Clobbers: [...]
+	# Frame:    40 bytes
+	# Uses:     $a0, $a1, $a2, $v0, $v1
+	# Clobbers: $t0, $t1, $t2, $t3, $s0, $s1
 	#
-	# Locals:           <-- FILL THIS OUT!
-	#   - ...
+	# Locals:
+	#   - $s0 (stores col/row)
+	#   - $s1 (stores base address of clues)
 	#
-	# Structure:        <-- FILL THIS OUT!
+	# Structure:
 	#   compute_all_clues
 	#   -> [prologue]
 	#     -> body
 	#   -> [epilogue]
 
 compute_all_clues__prologue:
+    addi    $sp, $sp, -40
+    sw      $ra, 36($sp)
+    sw      $s0, 32($sp)
+    sw      $s1, 28($sp)
 
 compute_all_clues__body:
+    li      $s0, 0
+compute_all_clues__vertical_loop:
+    bge     $s0, width, compute_all_clues__horizontal
+
+    sll     $t0, $s0, 2
+    add     $s1, $a1, $t0
+    lw      $s1, 0($s1)
+
+    li      $a1, 1
+    move    $a3, $s1
+    jal     compute_clue
+
+    addi    $s0, $s0, 1
+    j       compute_all_clues__vertical_loop
+
+compute_all_clues__horizontal:
+    li      $s0, 0
+compute_all_clues__horizontal_loop:
+    bge     $s0, height, compute_all_clues__epilogue
+
+    sll     $t0, $s0, 2
+    add     $s1, $a1, $t0
+    lw      $s1, 4($s1)
+
+    li      $a1, 0
+    move    $a3, $s1
+    jal     compute_clue
+
+    addi    $s0, $s0, 1
+    j       compute_all_clues__horizontal_loop
 
 compute_all_clues__epilogue:
-	jr      $ra
+    lw      $ra, 36($sp)
+    lw      $s0, 32($sp)
+    lw      $s1, 28($sp)
+    addi    $sp, $sp, 40
+    jr      $ra
 
 
 ################################################################################
