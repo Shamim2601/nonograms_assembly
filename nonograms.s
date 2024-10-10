@@ -177,7 +177,7 @@ str__get_command__bad_command:
 
 ################################################################################
 # .TEXT <main>
-                .text
+        .text
 main:
     # Subset:   1
     #
@@ -210,6 +210,7 @@ main__prologue:
     sw      $s5, 4($sp)
     sw      $s6, 0($sp)
 
+main__body:
     li      $s0, 0
     li      $s1, 0
 
@@ -295,7 +296,7 @@ prompt_for_dimension__loop:
     syscall
     move    $t0, $v0               # Store input in $t0
 
-    la    $s0, MIN_VALUE
+    la      $s0, MIN_VALUE
     blt     $t0, $s0, prompt_for_dimension__too_small
     bgt     $t0, $s1, prompt_for_dimension__too_big
 
@@ -315,7 +316,7 @@ prompt_for_dimension__too_small:
     li      $v0, 4
     syscall
 
-    la    $a0, MIN_VALUE
+    la      $a0, MIN_VALUE
     li      $v0, 1
     syscall
 
