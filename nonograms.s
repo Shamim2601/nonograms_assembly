@@ -214,11 +214,13 @@ main__body:
     li      $s0, 0
     li      $s1, 0
 
+    li      $a0, 3
     la      $a1, str__main__height
     li      $a2, MAX_HEIGHT
     la      $a3, height
     jal     prompt_for_dimension
 
+    li      $a0, 3
     la      $a1, str__main__width
     li	    $a2, MAX_WIDTH
     la      $a3, width
@@ -476,25 +478,40 @@ game_loop__epilogue:
 decode_coordinate:
 	# Subset:   2
 	#
-	# Frame:    [...]   <-- FILL THESE OUT!
-	# Uses:     [...]
-	# Clobbers: [...]
+	# Frame:    16 bytes
+	# Uses:     $a0, $a1, $a2, $a3, $v0
+	# Clobbers: $t0, $t1
 	#
-	# Locals:           <-- FILL THIS OUT!
-	#   - ...
+	# Locals:
+	#   - $t0 (stores base + maximum)
+	#   - $t1 (stores input - base)
 	#
-	# Structure:        <-- FILL THIS OUT!
+	# Structure:
 	#   decode_coordinate
 	#   -> [prologue]
 	#     -> body
 	#   -> [epilogue]
 
 decode_coordinate__prologue:
+    addi    $sp, $sp, -16
+    sw      $ra, 12($sp)
 
 decode_coordinate__body:
+    add     $t0, $a1, $a2        # t0 = base + maximum
+    blt     $a0, $a1, decode_coordinate__return_previous  # if input < base
+    bge     $a0, $t0, decode_coordinate__return_previous  # if input >= base + maximum
+
+    sub     $t1, $a0, $a1        # t1 = input - base
+    move    $v0, $t1             # return input - base
+    j       decode_coordinate__epilogue
+
+decode_coordinate__return_previous:
+    move    $v0, $a3             # return previous
 
 decode_coordinate__epilogue:
-	jr      $ra
+    lw      $ra, 12($sp)
+    addi    $sp, $sp, 16
+    jr      $ra
 
 
 ################################################################################
