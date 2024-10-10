@@ -295,7 +295,8 @@ prompt_for_dimension__loop:
     syscall
     move    $t0, $v0               # Store input in $t0
 
-    blt     $t0, MIN_VALUE, prompt_for_dimension__too_small
+	move    $s0, MIN_VALUE
+    blt     $t0, $s0, prompt_for_dimension__too_small
     bgt     $t0, $s1, prompt_for_dimension__too_big
 
     sw      $t0, 0($s2)            # Store valid input at the address of the variable
@@ -361,25 +362,60 @@ prompt_for_dimension__epilogue:
 initialise_game:
 	# Subset:   1
 	#
-	# Frame:    [...]   <-- FILL THESE OUT!
-	# Uses:     [...]
-	# Clobbers: [...]
+	# Frame:    16 bytes
+	# Uses:     $t0, $t1, $t2, $t3, $s0, $s1
+	# Clobbers: $t0, $t1, $t2, $t3
 	#
-	# Locals:           <-- FILL THIS OUT!
-	#   - ...
+	# Locals:
+	#   - $s0 (row counter)
+	#   - $s1 (col counter)
 	#
-	# Structure:        <-- FILL THIS OUT!
+	# Structure:
 	#   initialise_game
 	#   -> [prologue]
 	#     -> body
 	#   -> [epilogue]
 
 initialise_game__prologue:
+    addi    $sp, $sp, -16
+    sw      $ra, 12($sp)
+    sw      $s0, 8($sp)
+    sw      $s1, 4($sp)
 
 initialise_game__body:
+    lw      $t0, height
+    lw      $t1, width
+    move    $s0, $zero
+
+initialise_game__row_loop:
+    bge     $s0, $t0, initialise_game__epilogue
+    move    $s1, $zero
+
+initialise_game__col_loop:
+    bge     $s1, $t1, initialise_game__next_row
+    la      $t2, selected
+    mul     $t3, $s0, $t1
+    add     $t3, $t3, $s1
+    add     $t2, $t2, $t3
+    sb      $zero, 0($t2)
+
+    la      $t2, solution
+    add     $t2, $t2, $t3
+    sb      $zero, 0($t2)
+
+    addi    $s1, $s1, 1
+    j       initialise_game__col_loop
+
+initialise_game__next_row:
+    addi    $s0, $s0, 1
+    j       initialise_game__row_loop
 
 initialise_game__epilogue:
-	jr      $ra
+    lw      $ra, 12($sp)
+    lw      $s0, 8($sp)
+    lw      $s1, 4($sp)
+    addi    $sp, $sp, 16
+    jr      $ra
 
 
 ################################################################################
