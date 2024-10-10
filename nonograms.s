@@ -215,12 +215,12 @@ main__body:
     li      $s1, 0
 
     la      $a1, str__main__height
-    la      $a2, MAX_HEIGHT
+    li      $a2, MAX_HEIGHT
     la      $a3, height
     jal     prompt_for_dimension
 
     la      $a1, str__main__width
-    la	    $a2, MAX_WIDTH
+    li	    $a2, MAX_WIDTH
     la      $a3, width
     jal     prompt_for_dimension
 
@@ -296,7 +296,7 @@ prompt_for_dimension__loop:
     syscall
     move    $t0, $v0               # Store input in $t0
 
-    la      $s0, MIN_VALUE
+    li      $s0, MIN_VALUE
     blt     $t0, $s0, prompt_for_dimension__too_small
     bgt     $t0, $s1, prompt_for_dimension__too_big
 
@@ -316,7 +316,7 @@ prompt_for_dimension__too_small:
     li      $v0, 4
     syscall
 
-    la      $a0, MIN_VALUE
+    li      $a0, MIN_VALUE
     li      $v0, 1
     syscall
 
