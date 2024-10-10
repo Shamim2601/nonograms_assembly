@@ -295,7 +295,7 @@ prompt_for_dimension__loop:
     syscall
     move    $t0, $v0               # Store input in $t0
 
-	move    $s0, MIN_VALUE
+    la    $s0, MIN_VALUE
     blt     $t0, $s0, prompt_for_dimension__too_small
     bgt     $t0, $s1, prompt_for_dimension__too_big
 
@@ -315,7 +315,7 @@ prompt_for_dimension__too_small:
     li      $v0, 4
     syscall
 
-    move    $a0, MIN_VALUE
+    la    $a0, MIN_VALUE
     li      $v0, 1
     syscall
 
@@ -424,25 +424,49 @@ initialise_game__epilogue:
 game_loop:
 	# Subset:   1
 	#
-	# Frame:    [...]   <-- FILL THESE OUT!
-	# Uses:     [...]
-	# Clobbers: [...]
+	# Frame:    16 bytes
+	# Uses:     $t0, $t1, $ra
+	# Clobbers: $t0, $t1
 	#
-	# Locals:           <-- FILL THIS OUT!
-	#   - ...
+	# Locals:
+	#   - $t0 (stores the result of is_game_over)
 	#
-	# Structure:        <-- FILL THIS OUT!
+	# Structure:
 	#   game_loop
 	#   -> [prologue]
 	#     -> body
 	#   -> [epilogue]
 
 game_loop__prologue:
+    addi    $sp, $sp, -16
+    sw      $ra, 12($sp)
 
 game_loop__body:
+game_loop__loop:
+    jal     is_game_over
+    move    $t0, $v0
+    bnez    $t0, game_loop__end_loop
+
+    la      $a0, selected
+    jal     print_game
+
+    jal     get_command
+
+    la      $a0, selected
+    la      $a1, selection_clues
+    jal     compute_all_clues
+
+    j       game_loop__loop
+
+game_loop__end_loop:
+    la      $a0, selected
+    jal     print_game
 
 game_loop__epilogue:
-	jr      $ra
+    lw      $ra, 12($sp)
+    addi    $sp, $sp, 16
+    jr      $ra
+
 
 
 ################################################################################
