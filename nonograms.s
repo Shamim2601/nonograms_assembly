@@ -719,25 +719,134 @@ compute_all_clues__epilogue:
 make_move:
 	# Subset:   3
 	#
-	# Frame:    [...]   <-- FILL THESE OUT!
-	# Uses:     [...]
-	# Clobbers: [...]
+	# Frame:    64 bytes
+	# Uses:     $a0, $a1, $v0, $v1
+	# Clobbers: $t0, $t1, $t2, $t3, $s0, $s1, $s2, $s3
 	#
-	# Locals:           <-- FILL THIS OUT!
-	#   - ...
+	# Locals:
+	#   - $s0 (row)
+	#   - $s1 (col)
+	#   - $s2 (first_letter)
+	#   - $s3 (second_letter)
 	#
-	# Structure:        <-- FILL THIS OUT!
+	# Structure:
 	#   make_move
 	#   -> [prologue]
 	#     -> body
 	#   -> [epilogue]
 
 make_move__prologue:
+    addi    $sp, $sp, -64
+    sw      $ra, 60($sp)
+    sw      $s0, 56($sp)
+    sw      $s1, 52($sp)
+    sw      $s2, 48($sp)
+    sw      $s3, 44($sp)
 
 make_move__body:
+    la      $a0, prompt_first_coord
+    jal     printf
+    la      $a0, buffer
+    li      $v0, 12
+    syscall
+    move    $s2, $v0
+
+    la      $a0, prompt_second_coord
+    jal     printf
+    la      $a0, buffer
+    li      $v0, 12
+    syscall
+    move    $s3, $v0
+
+    li      $s0, -1
+    li      $s1, -1
+
+    move    $a0, $s2
+    li      $a1, 'A'
+    move    $a2, width
+    move    $a3, $s1
+    jal     decode_coordinate
+    move    $s1, $v0
+
+    move    $a0, $s3
+    li      $a1, 'A'
+    move    $a2, width
+    move    $a3, $s1
+    jal     decode_coordinate
+    move    $s1, $v0
+
+    move    $a0, $s2
+    li      $a1, 'a'
+    move    $a2, height
+    move    $a3, $s0
+    jal     decode_coordinate
+    move    $s0, $v0
+
+    move    $a0, $s3
+    li      $a1, 'a'
+    move    $a2, height
+    move    $a3, $s0
+    jal     decode_coordinate
+    move    $s0, $v0
+
+    li      $t0, -1
+    bne     $s0, $t0, check_col
+    j       bad_input
+check_col:
+    bne     $s1, $t0, ask_for_choice
+    j       bad_input
+
+bad_input:
+    la      $a0, bad_input_msg
+    jal     printf
+    jal     make_move
+    j       make_move__epilogue
+
+ask_for_choice:
+    li      $t1, 0
+choice_loop:
+    la      $a0, prompt_cell_choice
+    jal     printf
+    li      $v0, 12
+    syscall
+    move    $t2, $v0
+
+    li      $t3, '#'
+    beq     $t2, $t3, mark_cell
+    li      $t3, 'x'
+    beq     $t2, $t3, cross_cell
+    li      $t3, '.'
+    beq     $t2, $t3, unmark_cell
+    la      $a0, bad_input_msg
+    jal     printf
+    j       choice_loop
+
+mark_cell:
+    li      $t1, MARKED
+    j       update_grid
+
+cross_cell:
+    li      $t1, CROSSED_OUT
+    j       update_grid
+
+unmark_cell:
+    li      $t1, UNMARKED
+    j       update_grid
+
+update_grid:
+    la      $t3, selected
+    mul     $t2, $s0, width
+    add     $t2, $t2, $s1
+    sb      $t1, 0($t3)
 
 make_move__epilogue:
-	jr      $ra
+    lw      $ra, 60($sp)
+    lw      $s0, 56($sp)
+    lw      $s1, 52($sp)
+    lw      $s2, 48($sp)
+    lw      $s3, 44($sp)
+    addi    $sp, $sp, 64
+    jr      $ra
 
 
 ################################################################################
@@ -800,25 +909,79 @@ compute_clue__epilogue:
 is_game_over:
 	# Subset:   3
 	#
-	# Frame:    [...]   <-- FILL THESE OUT!
-	# Uses:     [...]
-	# Clobbers: [...]
+	# Frame:    32 bytes
+	# Uses:     $a0, $a1, $v0, $v1
+	# Clobbers: $t0, $t1, $t2, $t3, $s0, $s1, $s2, $s3, $s4
 	#
-	# Locals:           <-- FILL THIS OUT!
-	#   - ...
+	# Locals:
+	#   - $s0 (row)
+	#   - $s1 (col)
+	#   - $s2 (selection_clue)
+	#   - $s3 (solution_clue)
+	#   - $s4 (result)
 	#
-	# Structure:        <-- FILL THIS OUT!
+	# Structure:
 	#   is_game_over
 	#   -> [prologue]
 	#     -> body
 	#   -> [epilogue]
 
 is_game_over__prologue:
+    addi    $sp, $sp, -32
+    sw      $ra, 28($sp)
+    sw      $s0, 24($sp)
+    sw      $s1, 20($sp)
+    sw      $s2, 16($sp)
+    sw      $s3, 12($sp)
+    sw      $s4, 8($sp)
+    li      $s4, TRUE
 
 is_game_over__body:
+    li      $s0, 0
+row_loop:
+    bge     $s0, MAX_HEIGHT, end_game_check
+    li      $s1, 0
+col_loop:
+    bge     $s1, MAX_WIDTH, next_row
+
+    la      $t0, selection_clues
+    la      $t1, solution_clues
+    mul     $t2, $s1, MAX_HEIGHT
+    add     $t2, $t2, $s0
+    lb      $s2, vertical_clues_offset($t0, $t2)
+    lb      $s3, vertical_clues_offset($t1, $t2)
+    bne     $s2, $s3, game_not_over
+
+    la      $t0, selection_clues
+    la      $t1, solution_clues
+    mul     $t2, $s0, MAX_WIDTH
+    add     $t2, $t2, $s1
+    lb      $s2, horizontal_clues_offset($t0, $t2)
+    lb      $s3, horizontal_clues_offset($t1, $t2)
+    bne     $s2, $s3, game_not_over
+
+    addi    $s1, $s1, 1
+    j       col_loop
+
+next_row:
+    addi    $s0, $s0, 1
+    j       row_loop
+
+game_not_over:
+    li      $s4, FALSE
+
+end_game_check:
+    move    $v0, $s4
 
 is_game_over__epilogue:
-	jr      $ra
+    lw      $ra, 28($sp)
+    lw      $s0, 24($sp)
+    lw      $s1, 20($sp)
+    lw      $s2, 16($sp)
+    lw      $s3, 12($sp)
+    lw      $s4, 8($sp)
+    addi    $sp, $sp, 32
+    jr      $ra
 
 
 ################################################################################
